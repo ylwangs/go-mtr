@@ -7,8 +7,6 @@ import (
 const DEFAULT_PORT = 33434
 const DEFAULT_MAX_HOPS = 30
 const DEFAULT_TIMEOUT_MS = 800
-
-const DEFAULT_RETRIES = 5
 const DEFAULT_PACKET_SIZE = 56
 const DEFAULT_SNT_SIZE = 10
 
@@ -42,7 +40,6 @@ type MtrReturn struct {
 	BestTime time.Duration
 	AvgTime  time.Duration
 	WrstTime time.Duration
-	Seq      int
 }
 
 type MtrResult struct {
@@ -54,7 +51,6 @@ type MtrOptions struct {
 	port       int
 	maxHops    int
 	timeoutMs  int
-	retries    int
 	packetSize int
 	sntSize    int
 }
@@ -90,17 +86,6 @@ func (options *MtrOptions) TimeoutMs() int {
 
 func (options *MtrOptions) SetTimeoutMs(timeoutMs int) {
 	options.timeoutMs = timeoutMs
-}
-
-func (options *MtrOptions) Retries() int {
-	if options.retries == 0 {
-		options.retries = DEFAULT_RETRIES
-	}
-	return options.retries
-}
-
-func (options *MtrOptions) SetRetries(retries int) {
-	options.retries = retries
 }
 
 func (options *MtrOptions) SntSize() int {
