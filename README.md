@@ -2,7 +2,10 @@
 
 ## 介绍
 
-> 程序基于https://github.com/tonobo/mtr和https://github.com/liuxinglanyue/mtr进行了一定的bug修复和优化开发。支持单机多携程并发mtr探测，同时支持ipv4和ipv6。
+> 程序基于:
+> https://github.com/tonobo/mtr
+> https://github.com/liuxinglanyue/mtr
+进行了一定的bug修复和优化开发。支持单机多协程并发mtr探测，同时支持ipv4和ipv6。
 
 ## 案例
 ```
