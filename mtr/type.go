@@ -1,34 +1,28 @@
-package common
+// Copyright 2019 JD Inc. All Rights Reserved.
+// type.go - file brief introduce
+/*
+modification history
+----------------------------------------------
+2019/5/26 0:20, by wangyulong3@jd.com, create
+
+*/
+/*
+Description
+
+*/
+
+package mtr
 
 import (
 	"time"
+
+	"github.com/ylwang1122/go-mtr/common"
 )
 
-const DEFAULT_PORT = 33434
 const DEFAULT_MAX_HOPS = 30
 const DEFAULT_TIMEOUT_MS = 800
 const DEFAULT_PACKET_SIZE = 56
 const DEFAULT_SNT_SIZE = 10
-
-type IcmpReturn struct {
-	Success bool
-	Addr    string
-	Elapsed time.Duration
-}
-
-type IcmpHop struct {
-	Success  bool
-	Address  string
-	Host     string
-	N        int
-	TTL      int
-	Snt      int
-	LastTime time.Duration
-	AvgTime  time.Duration
-	BestTime time.Duration
-	WrstTime time.Duration
-	Loss     float32
-}
 
 type MtrReturn struct {
 	Success  bool
@@ -44,26 +38,14 @@ type MtrReturn struct {
 
 type MtrResult struct {
 	DestAddress string
-	Hops        []IcmpHop
+	Hops        []common.IcmpHop
 }
 
 type MtrOptions struct {
-	port       int
 	maxHops    int
 	timeoutMs  int
 	packetSize int
 	sntSize    int
-}
-
-func (options *MtrOptions) Port() int {
-	if options.port == 0 {
-		options.port = DEFAULT_PORT
-	}
-	return options.port
-}
-
-func (options *MtrOptions) SetPort(port int) {
-	options.port = port
 }
 
 func (options *MtrOptions) MaxHops() int {

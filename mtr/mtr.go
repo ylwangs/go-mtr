@@ -3,10 +3,6 @@ package mtr
 import (
 	"bytes"
 	"fmt"
-	"net"
-	"runtime"
-	"strconv"
-	"strings"
 	"time"
 
 	"github.com/ylwang1122/go-mtr/common"
@@ -15,12 +11,12 @@ import (
 
 // 执行traceroute操作 新增ipv6操作
 func Mtr(ipAddr string, maxHops, sntSize, timeoutMs int) (result string, err error) {
-	options := common.MtrOptions{}
+	options := MtrOptions{}
 	options.SetMaxHops(maxHops)
 	options.SetSntSize(sntSize)
 	options.SetTimeoutMs(timeoutMs)
 
-	var out common.MtrResult
+	var out MtrResult
 	var buffer bytes.Buffer
 	buffer.WriteString(fmt.Sprintf("Start: %v, DestAddr: %v\n", time.Now().Format("2006-01-02 15:04:05"), ipAddr))
 	out, err = runMtr(ipAddr, &options)
@@ -47,7 +43,7 @@ func Mtr(ipAddr string, maxHops, sntSize, timeoutMs int) (result string, err err
 				hop_str = ""
 			}
 
-			buffer.WriteString(fmt.Sprintf("%-3d %-48v  %10.1f%c  %10v  %10.2f  %10.2f  %10.2f  %10.2f\n", hop.TTL, hop.Address, hop.Loss, '%', hop.Snt, time2Float(hop.LastTime), time2Float(hop.AvgTime), time2Float(hop.BestTime), time2Float(hop.WrstTime)))
+			buffer.WriteString(fmt.Sprintf("%-3d %-48v  %10.1f%c  %10v  %10.2f  %10.2f  %10.2f  %10.2f\n", hop.TTL, hop.Address, hop.Loss, '%', hop.Snt, common.Time2Float(hop.LastTime), common.Time2Float(hop.AvgTime), common.Time2Float(hop.BestTime), common.Time2Float(hop.WrstTime)))
 			last_hop = hop.TTL
 		} else {
 			if index != len(out.Hops)-1 {
@@ -63,22 +59,22 @@ func Mtr(ipAddr string, maxHops, sntSize, timeoutMs int) (result string, err err
 }
 
 // mtr的实现
-func runMtr(destAddr string, options *common.MtrOptions) (result common.MtrResult, err error) {
+func runMtr(destAddr string, options *MtrOptions) (result MtrResult, err error) {
 	result.Hops = []common.IcmpHop{}
 	result.DestAddress = destAddr
 
 	// 用于避免多协程发起mtr造成的干扰
-	pid := goid()
+	pid := common.Goid()
 	timeout := time.Duration(options.TimeoutMs()) * time.Millisecond
 
-	mtrResults := make([]*common.MtrReturn, options.MaxHops()+1)
+	mtrResults := make([]*MtrReturn, options.MaxHops()+1)
 
 	// 用于验证数据包
 	seq := 0
 	for snt := 0; snt < options.SntSize(); snt++ {
 		for ttl := 1; ttl < options.MaxHops(); ttl++ {
 			if mtrResults[ttl] == nil {
-				mtrResults[ttl] = &common.MtrReturn{TTL: ttl, Host: "???", SuccSum: 0, Success: false, LastTime: time.Duration(0), AllTime: time.Duration(0), BestTime: time.Duration(0), WrstTime: time.Duration(0), AvgTime: time.Duration(0)}
+				mtrResults[ttl] = &MtrReturn{TTL: ttl, Host: "???", SuccSum: 0, Success: false, LastTime: time.Duration(0), AllTime: time.Duration(0), BestTime: time.Duration(0), WrstTime: time.Duration(0), AvgTime: time.Duration(0)}
 			}
 
 			hopReturn, err := icmp.Icmp(destAddr, ttl, pid, timeout, seq)
@@ -99,7 +95,7 @@ func runMtr(destAddr string, options *common.MtrOptions) (result common.MtrResul
 			mtrResults[ttl].AvgTime = time.Duration((int64)(mtrResults[ttl].AllTime/time.Microsecond)/(int64)(mtrResults[ttl].SuccSum)) * time.Microsecond
 			mtrResults[ttl].Success = true
 
-			if isEqualIp(hopReturn.Addr, destAddr) {
+			if common.IsEqualIp(hopReturn.Addr, destAddr) {
 				break
 			}
 		}
@@ -129,49 +125,10 @@ func runMtr(destAddr string, options *common.MtrOptions) (result common.MtrResul
 		result.Hops = append(result.Hops, hop)
 
 		// 主要用于避免ipv6省略的情况
-		if isEqualIp(hop.Host, destAddr) {
+		if common.IsEqualIp(hop.Host, destAddr) {
 			break
 		}
 	}
 
 	return result, nil
-}
-
-func time2Float(t time.Duration) float32 {
-	return (float32)(t/time.Microsecond) / float32(1000)
-}
-
-func goid() int {
-	defer func() {
-		if err := recover(); err != nil {
-			fmt.Println("panic recover:panic info:%v", err)
-		}
-	}()
-
-	var buf [64]byte
-	n := runtime.Stack(buf[:], false)
-	idField := strings.Fields(strings.TrimPrefix(string(buf[:n]), "goroutine "))[0]
-	id, err := strconv.Atoi(idField)
-	if err != nil {
-		panic(fmt.Sprintf("cannot get goroutine id: %v", err))
-	}
-	return id
-}
-
-func isEqualIp(ips1, ips2 string) bool {
-	ip1 := net.ParseIP(ips1)
-	if ip1 == nil {
-		return false
-	}
-
-	ip2 := net.ParseIP(ips2)
-	if ip2 == nil {
-		return false
-	}
-
-	if ip1.String() != ip2.String() {
-		return false
-	}
-
-	return true
 }
