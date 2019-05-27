@@ -1,16 +1,3 @@
-// Copyright 2019 JD Inc. All Rights Reserved.
-// type.go - file brief introduce
-/*
-modification history
-----------------------------------------------
-2019/5/26 0:21, by wangyulong3@jd.com, create
-
-*/
-/*
-Description
-
-*/
-
 package ping
 
 import "time"
